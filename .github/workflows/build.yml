@@ -73,54 +73,54 @@ jobs:
           xcodegen generate
 
 
-      - name: Build Archive
+      - name: Archive Project
         run: |
+          # We use -archivePath to force a known location
           xcodebuild archive \
-            -project GameHub.xcodeproj \
             -scheme GameHub \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath build/GameHub.xcarchive \
+            -archivePath build/App.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Export IPA
         run: |
-          # 1. Create a clean Payload directory
+          # 1. Prepare the Payload folder
           mkdir -p build/Payload
           
-          # 2. Search for any .app bundle inside the build folder
-          # This avoids errors if the archive name is different (WinHub vs GameHub)
-          APP_PATH=$(find build -name "*.app" -type d | head -n 1)
+          # 2. Dynamically find the .app bundle inside the archive
+          # This works regardless of the project or scheme name
+          APP_PATH=$(find build/App.xcarchive -name "*.app" -type d | head -n 1)
           
-          if [ -n "$APP_PATH" ]; then
-            echo "Found App Bundle at: $APP_PATH"
-            # 3. Copy the found .app into the Payload folder
-            cp -r "$APP_PATH" build/Payload/
-          else
-            echo "Error: No .app bundle found in the build directory."
-            # List files to help debug if it fails
-            ls -R build
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: .app bundle not found in archive."
             exit 1
           fi
           
-          # 4. Create the IPA
+          echo "Found App at: $APP_PATH"
+          
+          # 3. Copy app to Payload and fix execution bits
+          cp -r "$APP_PATH" build/Payload/
+          
+          # 4. Create the final ZIP/IPA
           cd build
-          zip -qr WinHub_Final.ipa Payload
+          zip -rq GameHub_Build.ipa Payload
+          
+      - name: Upload to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-IPA-Package
+          path: build/GameHub_Build.ipa
+      - name: Archive Project
+        run: |
+          # We use -archivePath to force a known location
+          xcodebuild archive \
+            -scheme GameHub \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/App.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
 
-
-
-
-
-
-
-
-
-
-
-      
-
-
-        
-   
+     
