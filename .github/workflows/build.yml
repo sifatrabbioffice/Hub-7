@@ -66,6 +66,22 @@ jobs:
           </plist>
           EOF
 
+
+           cat <<EOF > GameHub/App.swift
+             import SwiftUI
+
+          @main
+           struct GameHubApp: App {
+             var body: some Scene {
+            WindowGroup {
+                Text("GameHub Loaded Successfully")
+            }
+           }
+            }
+           EOF
+
+
+
           # 3. Verify the file exists for the logs
           ls -R GameHub/
           
