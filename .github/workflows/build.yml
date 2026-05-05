@@ -85,25 +85,27 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-
       - name: Export IPA
         run: |
+          # 1. Create and verify the Payload directory
           mkdir -p build/Payload
           
-          # 1. Copy the .app bundle to the Payload folder
-          cp -r build/GameHub.xcarchive/Products/Applications/GameHub.app build/Payload/
+          # 2. Copy the .app bundle
+          cp -r build/GameHub.xcarchive/Products/Applications/*.app build/Payload/
           
-          # 2. Fix permissions: Ensure the binary is executable
-          # This prevents the 'Bad file descriptor' error during mapping
-          chmod +x build/Payload/GameHub.app/GameHub
+          # 3. Dynamically find the executable and fix permissions
+          # This looks for the main binary inside the .app folder
+          APP_PATH=$(find build/Payload -name "*.app" | head -n 1)
+          EXECUTABLE_NAME=$(defaults read "$(pwd)/$APP_PATH/Info.plist" CFBundleExecutable)
           
-          # 3. Create the IPA using a clean zip command
-          # We move into the directory to ensure the internal paths are correct
+          if [ -f "$APP_PATH/$EXECUTABLE_NAME" ]; then
+            echo "Found executable: $EXECUTABLE_NAME. Setting permissions..."
+            chmod +x "$APP_PATH/$EXECUTABLE_NAME"
+          else
+            echo "Error: Executable $EXECUTABLE_NAME not found in $APP_PATH"
+            exit 1
+          fi
+          
+          # 4. Create the IPA
           cd build
           zip -r9 GameHub_Final.ipa Payload
-          
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: GameHub-Pro-Fixed
-          path: build/GameHub_Final.ipa
