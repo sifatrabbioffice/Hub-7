@@ -85,18 +85,30 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      - name: Export IPA
+            - name: Export IPA
         run: |
+          # 1. Create a clean Payload directory
           mkdir -p build/Payload
-          cp -r build/WinHub.xcarchive/Products/Applications/*.app build/Payload/
+          
+          # 2. Search for any .app bundle inside the build folder
+          # This avoids errors if the archive name is different (WinHub vs GameHub)
+          APP_PATH=$(find build -name "*.app" -type d | head -n 1)
+          
+          if [ -n "$APP_PATH" ]; then
+            echo "Found App Bundle at: $APP_PATH"
+            # 3. Copy the found .app into the Payload folder
+            cp -r "$APP_PATH" build/Payload/
+          else
+            echo "Error: No .app bundle found in the build directory."
+            # List files to help debug if it fails
+            ls -R build
+            exit 1
+          fi
+          
+          # 4. Create the IPA
           cd build
           zip -qr WinHub_Final.ipa Payload
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: WinHub-App-Package
-          path: build/WinHub.ipa
 
 
 
