@@ -85,15 +85,25 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
+
       - name: Export IPA
         run: |
           mkdir -p build/Payload
-          cp -r build/GameHub.xcarchive/Products/Applications/*.app build/Payload/
+          
+          # 1. Copy the .app bundle to the Payload folder
+          cp -r build/GameHub.xcarchive/Products/Applications/GameHub.app build/Payload/
+          
+          # 2. Fix permissions: Ensure the binary is executable
+          # This prevents the 'Bad file descriptor' error during mapping
+          chmod +x build/Payload/GameHub.app/GameHub
+          
+          # 3. Create the IPA using a clean zip command
+          # We move into the directory to ensure the internal paths are correct
           cd build
-          zip -qr GameHub_Final.ipa Payload
-
+          zip -r9 GameHub_Final.ipa Payload
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GameHub-Pro-Build
+          name: GameHub-Pro-Fixed
           path: build/GameHub_Final.ipa
