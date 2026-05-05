@@ -87,44 +87,16 @@ jobs:
 
       - name: Export IPA
         run: |
-          # 1. Prepare Payload
           mkdir -p build/Payload
-          cp -r build/GameHub.xcarchive/Products/Applications/*.app build/Payload/
-          
-          # 2. Debug: List contents to see exactly what was built
-          APP_PATH=$(find build/Payload -name "*.app" | head -n 1)
-          echo "Listing contents of $APP_PATH:"
-          ls -R "$APP_PATH"
-          
-          # 3. Robustly find the Mach-O binary
-          # We search for files and check if they are "executable" or Mach-O format
-          echo "Searching for the main binary..."
-          EXECUTABLE_PATH=$(find "$APP_PATH" -maxdepth 1 -type f -perm +111 -not -name "*.plist" -not -name "*.png" | head -n 1)
-
-          # Fallback: If perm check fails, find the largest file in the root of .app
-          if [ -z "$EXECUTABLE_PATH" ]; then
-             EXECUTABLE_PATH=$(ls -S "$APP_PATH" | head -n 1)
-             EXECUTABLE_PATH="$APP_PATH/$EXECUTABLE_PATH"
-          fi
-
-          if [ -f "$EXECUTABLE_PATH" ]; then
-            echo "Identified binary at: $EXECUTABLE_PATH"
-            chmod +x "$EXECUTABLE_PATH"
-          else
-            echo "Error: Could not locate binary in $APP_PATH"
-            exit 1
-          fi
-          
-          # 4. Final Packaging
+          cp -r build/WinHub.xcarchive/Products/Applications/*.app build/Payload/
           cd build
-          zip -r9 GameHub_Final.ipa Payload
-
+          zip -qr WinHub_Final.ipa Payload
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WinHub-App-Package
-          path: build/WinHub_Final.ipa
+          path: build/WinHub.ipa
 
 
 
