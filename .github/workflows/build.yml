@@ -85,27 +85,51 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      - name: Export IPA
+            - name: Export IPA
         run: |
-          # 1. Create and verify the Payload directory
+          # 1. Prepare Payload
           mkdir -p build/Payload
-          
-          # 2. Copy the .app bundle
           cp -r build/GameHub.xcarchive/Products/Applications/*.app build/Payload/
           
-          # 3. Dynamically find the executable and fix permissions
-          # This looks for the main binary inside the .app folder
+          # 2. Debug: List contents to see exactly what was built
           APP_PATH=$(find build/Payload -name "*.app" | head -n 1)
-          EXECUTABLE_NAME=$(defaults read "$(pwd)/$APP_PATH/Info.plist" CFBundleExecutable)
+          echo "Listing contents of $APP_PATH:"
+          ls -R "$APP_PATH"
           
-          if [ -f "$APP_PATH/$EXECUTABLE_NAME" ]; then
-            echo "Found executable: $EXECUTABLE_NAME. Setting permissions..."
-            chmod +x "$APP_PATH/$EXECUTABLE_NAME"
+          # 3. Robustly find the Mach-O binary
+          # We search for files and check if they are "executable" or Mach-O format
+          echo "Searching for the main binary..."
+          EXECUTABLE_PATH=$(find "$APP_PATH" -maxdepth 1 -type f -perm +111 -not -name "*.plist" -not -name "*.png" | head -n 1)
+
+          # Fallback: If perm check fails, find the largest file in the root of .app
+          if [ -z "$EXECUTABLE_PATH" ]; then
+             EXECUTABLE_PATH=$(ls -S "$APP_PATH" | head -n 1)
+             EXECUTABLE_PATH="$APP_PATH/$EXECUTABLE_PATH"
+          fi
+
+          if [ -f "$EXECUTABLE_PATH" ]; then
+            echo "Identified binary at: $EXECUTABLE_PATH"
+            chmod +x "$EXECUTABLE_PATH"
           else
-            echo "Error: Executable $EXECUTABLE_NAME not found in $APP_PATH"
+            echo "Error: Could not locate binary in $APP_PATH"
             exit 1
           fi
           
-          # 4. Create the IPA
+          # 4. Final Packaging
           cd build
           zip -r9 GameHub_Final.ipa Payload
+
+
+
+
+
+
+
+
+
+
+      
+
+
+        
+   
