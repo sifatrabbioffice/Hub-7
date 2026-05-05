@@ -1,18 +1,13 @@
 name: GameHub
-options:
-  bundleIdPrefix: com.gamehub.emulator
 targets:
   GameHub:
-    type: application
+    type: bundle.application
     platform: iOS
-    deploymentTarget: "17.0"
-    sources: [GameHub]
+    deploymentTarget: "15.0"
+    sources:
+      - path: GameHub
     settings:
-      base:
-        INFOPLIST_FILE: GameHub/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
-        PRODUCT_BUNDLE_IDENTIFIER: com.gamehub.emulator.pro
-        MARKETING_VERSION: 1.0
-        CURRENT_PROJECT_VERSION: 1
-        TARGETED_DEVICE_FAMILY: 1
-        UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+      PRODUCT_BUNDLE_IDENTIFIER: com.gamehub.emulator.pro
+      INFOPLIST_FILE: GameHub/Info.plist
+      # Ensure Swift version is set to avoid the preview warnings seen in your logs
+      SWIFT_VERSION: 5.0
